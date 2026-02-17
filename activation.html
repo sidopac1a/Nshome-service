@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NS Activation - تفعيل النظام</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .activation-container {
+            background: white;
+            border-radius: 30px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+        }
+
+        .activation-header {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .activation-header img {
+            width: 100px;
+            height: 100px;
+            border-radius: 20px;
+            margin-bottom: 1rem;
+            border: 4px solid rgba(255,255,255,0.3);
+        }
+
+        .activation-header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .activation-header p {
+            opacity: 0.9;
+        }
+
+        .activation-body {
+            padding: 2.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+            color: #374151;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            text-align: center;
+            letter-spacing: 3px;
+            font-weight: 700;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn-activate {
+            width: 100%;
+            padding: 1.2rem;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 1rem;
+        }
+
+        .btn-activate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-activate:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .trial-info {
+            background: #f3f4f6;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .trial-info h3 {
+            color: #2563eb;
+            margin-bottom: 0.5rem;
+        }
+
+        .trial-info p {
+            color: #6b7280;
+            font-size: 0.95rem;
+        }
+
+        .message {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: none;
+            text-align: center;
+        }
+
+        .message.success {
+            background: #d1fae5;
+            color: #065f46;
+            display: block;
+        }
+
+        .message.error {
+            background: #fee2e2;
+            color: #991b1b;
+            display: block;
+        }
+
+        .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-left: 0.5rem;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .feature {
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .feature i {
+            font-size: 2rem;
+            color: #2563eb;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature h4 {
+            font-size: 0.9rem;
+            color: #374151;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 1.5rem;
+            color: #9ca3af;
+            font-size: 0.9rem;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        @media (max-width: 480px) {
+            .activation-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="activation-container">
+        <div class="activation-header">
+            <img src="https://via.placeholder.com/100x100/2563eb/ffffff?text=NS" alt="NS Logo" id="logoImg">
+            <h1>تفعيل نظام NS Home</h1>
+            <p>أدخل كود التفعيل لبدء الفترة التجريبية</p>
+        </div>
+
+        <div class="activation-body">
+            <div class="trial-info">
+                <h3>🎁 14 يوم تجربة مجانية</h3>
+                <p>احصل على كامل مميزات النظام لمدة 14 يوماً بدون أي رسوم</p>
+            </div>
+
+            <div class="features">
+                <div class="feature">
+                    <div style="font-size: 2rem;">🏠</div>
+                    <h4>إدارة الخدمات</h4>
+                </div>
+                <div class="feature">
+                    <div style="font-size: 2rem;">📱</div>
+                    <h4>تطبيق جوال</h4>
+                </div>
+                <div class="feature">
+                    <div style="font-size: 2rem;">📊</div>
+                    <h4>تقارير وإحصائيات</h4>
+                </div>
+                <div class="feature">
+                    <div style="font-size: 2rem;">🔔</div>
+                    <h4>تنبيهات فورية</h4>
+                </div>
+            </div>
+
+            <form id="activationForm">
+                <div class="form-group">
+                    <label>كود التفعيل</label>
+                    <input type="text" id="activationCode" placeholder="XXXX-XXXX" maxlength="10" required autocomplete="off">
+                </div>
+
+                <button type="submit" class="btn-activate" id="activateBtn">
+                    تفعيل النظام
+                    <span class="spinner" id="spinner"></span>
+                </button>
+            </form>
+
+            <div id="message" class="message"></div>
+
+            <div style="margin-top: 2rem; text-align: center;">
+                <p style="color: #6b7280; margin-bottom: 0.5rem;">ليس لديك كود تفعيل؟</p>
+                <a href="#" onclick="contactSupport()" style="color: #2563eb; text-decoration: none; font-weight: 700;">
+                    تواصل مع الدعم الفني
+                </a>
+            </div>
+        </div>
+
+        <div class="footer">
+            © 2024 NS Home Service - جميع الحقوق محفوظة
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCxiENTocnUd484VCe6ru8MCCQZp1gwvLk",
+            authDomain: "abcdef-3f89d.firebaseapp.com",
+            projectId: "abcdef-3f89d",
+            storageBucket: "abcdef-3f89d.firebasestorage.app",
+            messagingSenderId: "250358897288",
+            appId: "1:250358897288:web:50b6f8df76cd1bcbc15d3d",
+            measurementId: "G-NPW8F9B3D0"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Check if already activated
+        window.onload = function() {
+            const isActivated = localStorage.getItem('ns_app_activated');
+            const expiry = localStorage.getItem('ns_activation_expiry');
+            
+            if (isActivated === 'true' && expiry && new Date().getTime() < parseInt(expiry)) {
+                const daysLeft = Math.ceil((parseInt(expiry) - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                showMessage('النظام مفعل بالفعل! متبقي ' + daysLeft + ' يوم', 'success');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 2000);
+            }
+            
+            // Load logo
+            database.ref('settings/logo').once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    document.getElementById('logoImg').src = snapshot.val();
+                }
+            });
+        };
+
+        // Form Submit
+        document.getElementById('activationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const code = document.getElementById('activationCode').value.trim().toUpperCase();
+            const btn = document.getElementById('activateBtn');
+            const spinner = document.getElementById('spinner');
+            
+            if (!code) return;
+            
+            btn.disabled = true;
+            spinner.style.display = 'inline-block';
+            
+            // Check code in Firebase
+            database.ref('activation_codes/' + code).once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    const codeData = snapshot.val();
+                    
+                    if (codeData.active === true) {
+                        // Activate trial
+                        const trialDays = 14;
+                        const expiryDate = new Date().getTime() + (trialDays * 24 * 60 * 60 * 1000);
+                        
+                        localStorage.setItem('ns_app_activated', 'true');
+                        localStorage.setItem('ns_activation_expiry', expiryDate);
+                        localStorage.setItem('ns_activation_code', code);
+                        
+                        // Update code status
+                        database.ref('activation_codes/' + code).update({
+                            active: false,
+                            usedAt: firebase.database.ServerValue.TIMESTAMP,
+                            usedBy: navigator.userAgent
+                        });
+                        
+                        showMessage('✅ تم التفعيل بنجاح! جاري التحويل...', 'success');
+                        
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 2000);
+                    } else {
+                        showMessage('❌ كود التفعيل مستخدم مسبقاً', 'error');
+                    }
+                } else {
+                    // Demo codes for testing
+                    const demoCodes = ['NS2024', 'TEST1234', 'OMAN2024'];
+                    if (demoCodes.includes(code)) {
+                        const trialDays = 14;
+                        const expiryDate = new Date().getTime() + (trialDays * 24 * 60 * 60 * 1000);
+                        
+                        localStorage.setItem('ns_app_activated', 'true');
+                        localStorage.setItem('ns_activation_expiry', expiryDate);
+                        localStorage.setItem('ns_activation_code', code);
+                        
+                        showMessage('✅ تم التفعيل بنجاح (وضع تجريبي)! جاري التحويل...', 'success');
+                        
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 2000);
+                    } else {
+                        showMessage('❌ كود التفعيل غير صحيح', 'error');
+                    }
+                }
+            }).catch(error => {
+                showMessage('❌ حدث خطأ: ' + error.message, 'error');
+            }).finally(() => {
+                btn.disabled = false;
+                spinner.style.display = 'none';
+            });
+        });
+
+        function showMessage(text, type) {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = 'message ' + type;
+        }
+
+        function contactSupport() {
+            alert('للحصول على كود تفعيل، يرجى التواصل معنا على:\nالبريد: support@nshome.om\nالهاتف: 80000000');
+        }
+    </script>
+</body>
+</html>
