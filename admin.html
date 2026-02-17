@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NS Admin - لوحة التحكم</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage-compat.js"></script>
+    
+    <!-- Chart.js for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --dark: #1f2937;
+            --light: #f3f4f6;
+            --sidebar: #1e293b;
+            --sidebar-hover: #334155;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: #f1f5f9;
+            color: var(--dark);
+        }
+
+        /* Login Screen */
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .login-box {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-box h2 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 2rem;
+            font-size: 1.8rem;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+
+        .login-box button {
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .login-box button:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Layout */
+        .admin-container {
+            display: none;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: var(--sidebar);
+            color: white;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: transform 0.3s;
+        }
+
+        .sidebar-header {
+            padding: 2rem;
+            border-bottom: 1px solid var(--sidebar-hover);
+            text-align: center;
+        }
+
+        .sidebar-logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 15px;
+            margin-bottom: 1rem;
+            object-fit: cover;
+            border: 3px solid var(--primary);
+        }
+
+        .sidebar-menu {
+            padding: 1rem 0;
+        }
+
+        .menu-item {
+            padding: 1rem 2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border-right: 4px solid transparent;
+        }
+
+        .menu-item:hover, .menu-item.active {
+            background: var(--sidebar-hover);
+            border-right-color: var(--primary);
+        }
+
+        .menu-item i {
+            width: 24px;
+            text-align: center;
+        }
+
+        .main-content {
+            margin-right: 280px;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .top-bar {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logout-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #dc2626;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .stat-icon.blue { background: rgba(37, 99, 235, 0.1); color: var(--primary); }
+        .stat-icon.green { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .stat-icon.orange { background: rgba(245, 158, 11, 0.1); color: var(--secondary); }
+        .stat-icon.red { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+
+        .stat-details h3 {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--dark);
+        }
+
+        .stat-details p {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        /* Content Sections */
+        .content-section {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: right;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th {
+            background: #f8fafc;
+            font-weight: 700;
+            color: #64748b;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        tr:hover {
+            background: #f8fafc;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-processing { background: #dbeafe; color: #1e40af; }
+        .status-team_assigned { background: #e0e7ff; color: #3730a3; }
+        .status-on_way { background: #c7d2fe; color: #312e81; }
+        .status-completed { background: #d1fae5; color: #065f46; }
+
+        /* Forms */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+        }
+
+        /* Order Details */
+        .order-details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .detail-item {
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .detail-label {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-bottom: 0.25rem;
+        }
+
+        .detail-value {
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .map-container {
+            width: 100%;
+            height: 200px;
+            background: #e5e7eb;
+            border-radius: 8px;
+            margin: 1rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+        }
+
+        /* Mobile Responsive */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(100%);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-right: 0;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .order-details-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #6b7280;
+        }
+
+        .spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 2rem 0;
+        }
+
+        /* Image Upload */
+        .image-upload {
+            border: 2px dashed #d1d5db;
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .image-upload:hover {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 10px;
+            margin-top: 1rem;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            z-index: 3000;
+            display: none;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .notification.show {
+            display: flex;
+            animation: slideDown 0.3s;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+
+        .notification.success { border-top: 4px solid var(--success); }
+        .notification.error { border-top: 4px solid var(--danger); }
+    </style>
+</head>
+<body>
+
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-box">
+            <h2><i class="fas fa-lock"></i> تسجيل الدخول</h2>
+            <input type="email" id="adminEmail" placeholder="البريد الإلكتروني" value="admin@nshome.om">
+            <input type="password" id="adminPassword" placeholder="كلمة المرور">
+            <button onclick="login()">دخول</button>
+            <p style="text-align: center; margin-top: 1rem; color: #6b7280; font-size: 0.9rem;">
+                افتراضي: admin@nshome.om / admin123
+            </p>
+        </div>
+    </div>
+
+    <!-- Admin Container -->
+    <div class="admin-container" id="adminContainer">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <img src="https://via.placeholder.com/80x80/2563eb/ffffff?text=NS" alt="Logo" class="sidebar-logo" id="sidebarLogo">
+                <h3>NS Home Service</h3>
+                <p>لوحة التحكم</p>
+            </div>
+            <nav class="sidebar-menu">
+                <div class="menu-item active" onclick="showSection('dashboard')">
+                    <i class="fas fa-home"></i>
+                    <span>الرئيسية</span>
+                </div>
+                <div class="menu-item" onclick="showSection('orders')">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>الطلبات</span>
+                    <span class="badge" id="newOrdersBadge" style="background: var(--danger); color: white; padding: 0.2rem 0.5rem; border-radius: 10px; font-size: 0.75rem; margin-right: auto; display: none;">0</span>
+                </div>
+                <div class="menu-item" onclick="showSection('services')">
+                    <i class="fas fa-tools"></i>
+                    <span>الخدمات</span>
+                </div>
+                <div class="menu-item" onclick="showSection('settings')">
+                    <i class="fas fa-cog"></i>
+                    <span>الإعدادات</span>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 class="page-title" id="pageTitle">الرئيسية</h1>
+                <div class="user-info">
+                    <span id="adminName">مدير النظام</span>
+                    <button class="logout-btn" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> خروج
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dashboard Section -->
+            <section class="content-section active" id="dashboardSection">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3 id="totalOrders">0</h3>
+                            <p>إجمالي الطلبات</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orange">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3 id="pendingOrders">0</h3>
+                            <p>طلبات قيد الانتظار</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3 id="completedOrders">0</h3>
+                            <p>طلبات مكتملة</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon red">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3 id="totalRevenue">0 ر.ع</h3>
+                            <p>الإيرادات</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">إحصائيات الطلبات</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="ordersChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">آخر الطلبات</h3>
+                        <button class="btn btn-primary" onclick="showSection('orders')">عرض الكل</button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>رقم الطلب</th>
+                                    <th>العميل</th>
+                                    <th>الخدمة</th>
+                                    <th>الحالة</th>
+                                    <th>السعر</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentOrdersTable">
+                                <tr><td colspan="5" class="loading">جاري التحميل...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Orders Section -->
+            <section class="content-section" id="ordersSection">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">إدارة الطلبات</h3>
+                        <div>
+                            <select id="statusFilter" onchange="filterOrders()" style="padding: 0.5rem; border-radius: 5px; border: 1px solid #e5e7eb;">
+                                <option value="all">جميع الحالات</option>
+                                <option value="pending">قيد الانتظار</option>
+                                <option value="processing">قيد المعالجة</option>
+                                <option value="team_assigned">تم تعيين الفريق</option>
+                                <option value="on_way">في الطريق</option>
+                                <option value="completed">مكتمل</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>رقم الطلب</th>
+                                    <th>التاريخ</th>
+                                    <th>العميل</th>
+                                    <th>الهاتف</th>
+                                    <th>الخدمة</th>
+                                    <th>السرعة</th>
+                                    <th>السعر</th>
+                                    <th>الحالة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersTable">
+                                <tr><td colspan="9" class="loading">جاري التحميل...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Services Section -->
+            <section class="content-section" id="servicesSection">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">الخدمات المتاحة</h3>
+                        <button class="btn btn-primary" onclick="openServiceModal()">
+                            <i class="fas fa-plus"></i> إضافة خدمة
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>الصورة</th>
+                                    <th>الاسم</th>
+                                    <th>السعر العادي</th>
+                                    <th>السعر السريع</th>
+                                    <th>الحالة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="servicesTable">
+                                <tr><td colspan="6" class="loading">جاري التحميل...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section class="content-section" id="settingsSection">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">إعدادات النظام</h3>
+                    </div>
+                    <form id="settingsForm" onsubmit="saveSettings(event)">
+                        <div class="form-group">
+                            <label>شعار النظام</label>
+                            <div class="image-upload" onclick="document.getElementById('logoInput').click()">
+                                <i class="fas fa-cloud-upload-alt fa-2x" style="color: var(--primary); margin-bottom: 0.5rem;"></i>
+                                <p>اضغط لرفع صورة جديدة</p>
+                                <img id="logoPreview" class="image-preview" style="display: none;">
+                            </div>
+                            <input type="file" id="logoInput" accept="image/*" style="display: none;" onchange="previewLogo(event)">
+                        </div>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>اسم الشركة</label>
+                                <input type="text" id="companyName" value="NS Home Service">
+                            </div>
+                            <div class="form-group">
+                                <label>رقم الهاتف</label>
+                                <input type="text" id="companyPhone" value="80000000">
+                            </div>
+                            <div class="form-group">
+                                <label>البريد الإلكتروني</label>
+                                <input type="email" id="companyEmail" value="info@nshome.om">
+                            </div>
+                            <div class="form-group">
+                                <label>نص التذييل</label>
+                                <input type="text" id="footerText" value="© 2024 NS Home Service">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">حفظ الإعدادات</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">إدارة أكواد التفعيل</h3>
+                    </div>
+                    <div class="form-group">
+                        <label>إنشاء كود تفعيل جديد</label>
+                        <div style="display: flex; gap: 1rem;">
+                            <input type="text" id="newActivationCode" placeholder="مثال: OM2024" style="flex: 1;">
+                            <button class="btn btn-success" onclick="generateActivationCode()">توليد كود</button>
+                            <button class="btn btn-primary" onclick="addActivationCode()">إضافة</button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>الكود</th>
+                                    <th>الحالة</th>
+                                    <th>تاريخ الإنشاء</th>
+                                    <th>مستخدم من قبل</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activationCodesTable">
+                                <tr><td colspan="5" class="loading">جاري التحميل...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div class="modal" id="orderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>تفاصيل الطلب <span id="modalOrderId"></span></h3>
+                <button class="close-modal" onclick="closeOrderModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="order-details-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">العميل</div>
+                        <div class="detail-value" id="modalCustomerName"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">الهاتف</div>
+                        <div class="detail-value" id="modalCustomerPhone"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">الخدمة</div>
+                        <div class="detail-value" id="modalService"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">السرعة</div>
+                        <div class="detail-value" id="modalSpeed"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">السعر</div>
+                        <div class="detail-value" id="modalPrice"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">التاريخ</div>
+                        <div class="detail-value" id="modalDate"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>الموقع</label>
+                    <div class="map-container" id="mapContainer">
+                        <span>الموقع على الخريطة</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>تحديث الحالة</label>
+                    <select id="statusUpdate" class="form-control" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 2px solid #e5e7eb;">
+                        <option value="pending">قيد الانتظار</option>
+                        <option value="processing">قيد المعالجة</option>
+                        <option value="team_assigned">تم تعيين الفريق</option>
+                        <option value="on_way">في الطريق</option>
+                        <option value="completed">مكتمل</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>ملاحظات الإدارة</label>
+                    <textarea id="adminNotes" rows="3" placeholder="أضف ملاحظات..."></textarea>
+                </div>
+
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn btn-primary" onclick="updateOrderStatus()" style="flex: 1;">
+                        <i class="fas fa-save"></i> تحديث الحالة
+                    </button>
+                    <button class="btn btn-success" onclick="contactCustomer()" style="flex: 1;">
+                        <i class="fas fa-phone"></i> اتصال بالعميل
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Modal -->
+    <div class="modal" id="serviceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="serviceModalTitle">إضافة خدمة جديدة</h3>
+                <button class="close-modal" onclick="closeServiceModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="serviceForm" onsubmit="saveService(event)">
+                    <input type="hidden" id="editingServiceId">
+                    
+                    <div class="form-group">
+                        <label>صورة الخدمة</label>
+                        <div class="image-upload" onclick="document.getElementById('serviceImageInput').click()">
+                            <img id="serviceImagePreview" class="image-preview" style="display: none; max-height: 150px;">
+                            <div id="serviceImagePlaceholder">
+                                <i class="fas fa-image fa-2x" style="color: var(--primary);"></i>
+                                <p>اضغط لاختيار صورة</p>
+                            </div>
+                        </div>
+                        <input type="file" id="serviceImageInput" accept="image/*" style="display: none;" onchange="previewServiceImage(event)">
+                    </div>
+
+                    <div class="form-group">
+                        <label>اسم الخدمة *</label>
+                        <input type="text" id="serviceName" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>الوصف</label>
+                        <textarea id="serviceDescription" rows="2"></textarea>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>السعر العادي (ر.ع) *</label>
+                            <input type="number" id="servicePrice" required min="0" step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label>السعر السريع (ر.ع) *</label>
+                            <input type="number" id="serviceExpressPrice" required min="0" step="0.5">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>المميزات (افصل بين كل ميزة بفاصلة)</label>
+                        <textarea id="serviceFeatures" rows="2" placeholder="مثال: تنظيف شامل, تعقيم, تجفيف"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="serviceActive" checked>
+                            نشط
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        <i class="fas fa-save"></i> حفظ الخدمة
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <i class="fas fa-check-circle"></i>
+        <span id="notificationText"></span>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCxiENTocnUd484VCe6ru8MCCQZp1gwvLk",
+            authDomain: "abcdef-3f89d.firebaseapp.com",
+            projectId: "abcdef-3f89d",
+            storageBucket: "abcdef-3f89d.firebasestorage.app",
+            messagingSenderId: "250358897288",
+            appId: "1:250358897288:web:50b6f8df76cd1bcbc15d3d",
+            measurementId: "G-NPW8F9B3D0"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+        const storage = firebase.storage();
+
+        // Global Variables
+        let currentOrder = null;
+        let ordersChart = null;
+        let allOrders = [];
+
+        // Check Auth State
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                showAdminPanel();
+            } else {
+                document.getElementById('loginScreen').style.display = 'flex';
+                document.getElementById('adminContainer').style.display = 'none';
+            }
+        });
+
+        // Login Function
+        function login() {
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .catch(error => {
+                    showNotification('خطأ في تسجيل الدخول: ' + error.message, 'error');
+                });
+        }
+
+        function logout() {
+            auth.signOut();
+        }
+
+        function showAdminPanel() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('adminContainer').style.display = 'block';
+            loadDashboard();
+            loadLogo();
+        }
+
+        // Load Logo
+        function loadLogo() {
+            database.ref('settings/logo').once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    document.getElementById('sidebarLogo').src = snapshot.val();
+                }
+            });
+        }
+
+        // Navigation
+        function showSection(section) {
+            // Update menu
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
+            
+            // Show selected section
+            document.getElementById(section + 'Section').classList.add('active');
+            
+            // Update title
+            const titles = {
+                'dashboard': 'الرئيسية',
+                'orders': 'الطلبات',
+                'services': 'الخدمات',
+                'settings': 'الإعدادات'
+            };
+            document.getElementById('pageTitle').textContent = titles[section];
+            
+            // Load section data
+            if (section === 'dashboard') loadDashboard();
+            else if (section === 'orders') loadOrders();
+            else if (section === 'services') loadServices();
+            else if (section === 'settings') loadSettings();
+            
+            // Close sidebar on mobile
+            if (window.innerWidth <= 1024) {
+                document.getElementById('sidebar').classList.remove('open');
+            }
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
+        // Dashboard Functions
+        function loadDashboard() {
+            database.ref('orders').on('value', snapshot => {
+                const orders = [];
+                let totalRevenue = 0;
+                let pending = 0;
+                let completed = 0;
+                
+                snapshot.forEach(child => {
+                    const order = child.val();
+                    orders.push(order);
+                    totalRevenue += parseFloat(order.price) || 0;
+                    if (order.status === 'pending') pending++;
+                    if (order.status === 'completed') completed++;
+                });
+                
+                allOrders = orders;
+                
+                // Update stats
+                document.getElementById('totalOrders').textContent = orders.length;
+                document.getElementById('pendingOrders').textContent = pending;
+                document.getElementById('completedOrders').textContent = completed;
+                document.getElementById('totalRevenue').textContent = totalRevenue.toFixed(2) + ' ر.ع';
+                
+                // Update chart
+                updateChart(orders);
+                
+                // Update recent orders table
+                updateRecentOrders(orders.slice(-5).reverse());
+            });
+        }
+
+        function updateChart(orders) {
+            const ctx = document.getElementById('ordersChart').getContext('2d');
+            
+            // Group orders by date
+            const dates = {};
+            orders.forEach(order => {
+                const date = new Date(order.createdAt).toLocaleDateString('ar-OM');
+                dates[date] = (dates[date] || 0) + 1;
+            });
+            
+            const labels = Object.keys(dates).slice(-7);
+            const data = labels.map(date => dates[date]);
+            
+            if (ordersChart) {
+                ordersChart.destroy();
+            }
+            
+            ordersChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'الطلبات',
+                        data: data,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateRecentOrders(orders) {
+            const tbody = document.getElementById('recentOrdersTable');
+            if (orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem;">لا توجد طلبات</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = orders.map(order => `
+                <tr>
+                    <td>${order.orderId}</td>
+                    <td>${order.customerName}</td>
+                    <td>${order.serviceName}</td>
+                    <td><span class="status-badge status-${order.status}">${getStatusText(order.status)}</span></td>
+                    <td>${order.price} ر.ع</td>
+                </tr>
+            `).join('');
+        }
+
+        // Orders Functions
+        function loadOrders() {
+            database.ref('orders').on('value', snapshot => {
+                const orders = [];
+                snapshot.forEach(child => {
+                    orders.push({...child.val(), key: child.key});
+                });
+                allOrders = orders.reverse();
+                renderOrdersTable(allOrders);
+            });
+        }
+
+        function renderOrdersTable(orders) {
+            const tbody = document.getElementById('ordersTable');
+            const filter = document.getElementById('statusFilter').value;
+            
+            const filtered = filter === 'all' ? orders : orders.filter(o => o.status === filter);
+            
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 2rem;">لا توجد طلبات</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = filtered.map(order => `
+                <tr>
+                    <td>${order.orderId}</td>
+                    <td>${new Date(order.createdAt).toLocaleDateString('ar-OM')}</td>
+                    <td>${order.customerName}</td>
+                    <td>${order.customerPhone}</td>
+                    <td>${order.serviceName}</td>
+                    <td>${order.speed === 'express' ? 'سريع' : 'عادي'}</td>
+                    <td>${order.price} ر.ع</td>
+                    <td><span class="status-badge status-${order.status}">${getStatusText(order.status)}</span></td>
+                    <td>
+                        <button class="btn btn-primary" onclick="viewOrder('${order.orderId}')" style="padding: 0.5rem;">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterOrders() {
+            renderOrdersTable(allOrders);
+        }
+
+        function getStatusText(status) {
+            const statuses = {
+                'pending': 'قيد الانتظار',
+                'processing': 'قيد المعالجة',
+                'team_assigned': 'تم تعيين الفريق',
+                'on_way': 'في الطريق',
+                'completed': 'مكتمل'
+            };
+            return statuses[status] || status;
+        }
+
+        function viewOrder(orderId) {
+            const order = allOrders.find(o => o.orderId === orderId);
+            if (!order) return;
+            
+            currentOrder = order;
+            
+            document.getElementById('modalOrderId').textContent = '#' + orderId;
+            document.getElementById('modalCustomerName').textContent = order.customerName;
+            document.getElementById('modalCustomerPhone').textContent = order.customerPhone;
+            document.getElementById('modalService').textContent = order.serviceName;
+            document.getElementById('modalSpeed').textContent = order.speed === 'express' ? 'سريع' : 'عادي';
+            document.getElementById('modalPrice').textContent = order.price + ' ر.ع';
+            document.getElementById('modalDate').textContent = new Date(order.createdAt).toLocaleString('ar-OM');
+            document.getElementById('statusUpdate').value = order.status;
+            
+            // Show map if coordinates exist
+            const mapContainer = document.getElementById('mapContainer');
+            if (order.latitude && order.longitude) {
+                mapContainer.innerHTML = `
+                    <iframe 
+                        width="100%" 
+                        height="100%" 
+                        frameborder="0" 
+                        scrolling="no" 
+                        marginheight="0" 
+                        marginwidth="0" 
+                        src="https://maps.google.com/maps?q=${order.latitude},${order.longitude}&z=15&output=embed"
+                        style="border-radius: 8px;">
+                    </iframe>
+                `;
+            } else {
+                mapContainer.innerHTML = '<span>لا يوجد موقع محدد</span>';
+            }
+            
+            document.getElementById('orderModal').classList.add('active');
+        }
+
+        function closeOrderModal() {
+            document.getElementById('orderModal').classList.remove('active');
+        }
+
+        function updateOrderStatus() {
+            if (!currentOrder) return;
+            
+            const newStatus = document.getElementById('statusUpdate').value;
+            const notes = document.getElementById('adminNotes').value;
+            
+            database.ref('orders/' + currentOrder.orderId).update({
+                status: newStatus,
+                adminNotes: notes,
+                updatedAt: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
+                showNotification('تم تحديث الحالة بنجاح', 'success');
+                closeOrderModal();
+                
+                // Send notification to customer (simulated)
+                console.log('Notification sent to customer:', currentOrder.customerPhone);
+            });
+        }
+
+        function contactCustomer() {
+            if (!currentOrder) return;
+            window.open('tel:' + currentOrder.customerPhone);
+        }
+
+        // Services Functions
+        function loadServices() {
+            database.ref('services').on('value', snapshot => {
+                const tbody = document.getElementById('servicesTable');
+                tbody.innerHTML = '';
+                
+                snapshot.forEach(child => {
+                    const service = child.val();
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><img src="${service.image || 'https://via.placeholder.com/50'}" style="width: 50px; height: 50px; border-radius: 8px; object-fit: cover;"></td>
+                        <td>${service.name}</td>
+                        <td>${service.price} ر.ع</td>
+                        <td>${service.expressPrice} ر.ع</td>
+                        <td><span class="status-badge ${service.active !== false ? 'status-completed' : 'status-pending'}">${service.active !== false ? 'نشط' : 'معطل'}</span></td>
+                        <td>
+                            <button class="btn btn-primary" onclick="editService('${child.key}')" style="padding: 0.5rem; margin-left: 0.5rem;">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-danger" onclick="deleteService('${child.key}')" style="padding: 0.5rem;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                
+                if (tbody.children.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem;">لا توجد خدمات</td></tr>';
+                }
+            });
+        }
+
+        let editingServiceId = null;
+        let serviceImageFile = null;
+
+        function openServiceModal() {
+            editingServiceId = null;
+            document.getElementById('serviceForm').reset();
+            document.getElementById('serviceModalTitle').textContent = 'إضافة خدمة جديدة';
+            document.getElementById('serviceImagePreview').style.display = 'none';
+            document.getElementById('serviceImagePlaceholder').style.display = 'block';
+            document.getElementById('serviceModal').classList.add('active');
+        }
+
+        function closeServiceModal() {
+            document.getElementById('serviceModal').classList.remove('active');
+            serviceImageFile = null;
+        }
+
+        function previewServiceImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                serviceImageFile = file;
+                const reader = new FileReader();
+                reader.onload = e => {
+                    document.getElementById('serviceImagePreview').src = e.target.result;
+                    document.getElementById('serviceImagePreview').style.display = 'block';
+                    document.getElementById('serviceImagePlaceholder').style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function saveService(e) {
+            e.preventDefault();
+            
+            const serviceData = {
+                name: document.getElementById('serviceName').value,
+                description: document.getElementById('serviceDescription').value,
+                price: parseFloat(document.getElementById('servicePrice').value),
+                expressPrice: parseFloat(document.getElementById('serviceExpressPrice').value),
+                features: document.getElementById('serviceFeatures').value.split(',').map(f => f.trim()).filter(f => f),
+                active: document.getElementById('serviceActive').checked
+            };
+            
+            const saveToDatabase = (imageUrl) => {
+                if (imageUrl) serviceData.image = imageUrl;
+                
+                if (editingServiceId) {
+                    database.ref('services/' + editingServiceId).update(serviceData);
+                } else {
+                    database.ref('services').push(serviceData);
+                }
+                
+                showNotification('تم حفظ الخدمة بنجاح', 'success');
+                closeServiceModal();
+            };
+            
+            if (serviceImageFile) {
+                const imageRef = storage.ref('services/' + Date.now() + '_' + serviceImageFile.name);
+                imageRef.put(serviceImageFile).then(snapshot => {
+                    return snapshot.ref.getDownloadURL();
+                }).then(url => {
+                    saveToDatabase(url);
+                });
+            } else {
+                saveToDatabase();
+            }
+        }
+
+        function editService(serviceId) {
+            database.ref('services/' + serviceId).once('value').then(snapshot => {
+                const service = snapshot.val();
+                editingServiceId = serviceId;
+                
+                document.getElementById('serviceName').value = service.name;
+                document.getElementById('serviceDescription').value = service.description || '';
+                document.getElementById('servicePrice').value = service.price;
+                document.getElementById('serviceExpressPrice').value = service.expressPrice;
+                document.getElementById('serviceFeatures').value = service.features ? service.features.join(', ') : '';
+                document.getElementById('serviceActive').checked = service.active !== false;
+                
+                if (service.image) {
+                    document.getElementById('serviceImagePreview').src = service.image;
+                    document.getElementById('serviceImagePreview').style.display = 'block';
+                    document.getElementById('serviceImagePlaceholder').style.display = 'none';
+                }
+                
+                document.getElementById('serviceModalTitle').textContent = 'تعديل الخدمة';
+                document.getElementById('serviceModal').classList.add('active');
+            });
+        }
+
+        function deleteService(serviceId) {
+            if (confirm('هل أنت متأكد من حذف هذه الخدمة؟')) {
+                database.ref('services/' + serviceId).remove();
+                showNotification('تم حذف الخدمة', 'success');
+            }
+        }
+
+        // Settings Functions
+        let logoFile = null;
+
+        function loadSettings() {
+            database.ref('settings').once('value').then(snapshot => {
+                const settings = snapshot.val() || {};
+                document.getElementById('companyName').value = settings.companyName || 'NS Home Service';
+                document.getElementById('companyPhone').value = settings.companyPhone || '80000000';
+                document.getElementById('companyEmail').value = settings.companyEmail || 'info@nshome.om';
+                document.getElementById('footerText').value = settings.footerText || '© 2024 NS Home Service';
+                
+                if (settings.logo) {
+                    document.getElementById('logoPreview').src = settings.logo;
+                    document.getElementById('logoPreview').style.display = 'block';
+                }
+            });
+            
+            loadActivationCodes();
+        }
+
+        function previewLogo(event) {
+            const file = event.target.files[0];
+            if (file) {
+                logoFile = file;
+                const reader = new FileReader();
+                reader.onload = e => {
+                    document.getElementById('logoPreview').src = e.target.result;
+                    document.getElementById('logoPreview').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function saveSettings(e) {
+            e.preventDefault();
+            
+            const settings = {
+                companyName: document.getElementById('companyName').value,
+                companyPhone: document.getElementById('companyPhone').value,
+                companyEmail: document.getElementById('companyEmail').value,
+                footerText: document.getElementById('footerText').value
+            };
+            
+            const saveSettings = (logoUrl) => {
+                if (logoUrl) settings.logo = logoUrl;
+                database.ref('settings').update(settings);
+                showNotification('تم حفظ الإعدادات بنجاح', 'success');
+            };
+            
+            if (logoFile) {
+                const logoRef = storage.ref('logo/' + logoFile.name);
+                logoRef.put(logoFile).then(snapshot => {
+                    return snapshot.ref.getDownloadURL();
+                }).then(url => {
+                    saveSettings(url);
+                });
+            } else {
+                saveSettings();
+            }
+        }
+
+        // Activation Codes
+        function loadActivationCodes() {
+            database.ref('activation_codes').on('value', snapshot => {
+                const tbody = document.getElementById('activationCodesTable');
+                tbody.innerHTML = '';
+                
+                snapshot.forEach(child => {
+                    const code = child.val();
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${child.key}</strong></td>
+                        <td><span class="status-badge ${code.active ? 'status-completed' : 'status-pending'}">${code.active ? 'نشط' : 'مستخدم'}</span></td>
+                        <td>${new Date(code.createdAt).toLocaleDateString('ar-OM')}</td>
+                        <td>${code.usedBy || '-'}</td>
+                        <td>
+                            <button class="btn btn-danger" onclick="deleteActivationCode('${child.key}')" style="padding: 0.5rem;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            });
+        }
+
+        function generateActivationCode() {
+            const code = 'NS' + Math.random().toString(36).substring(2, 8).toUpperCase();
+            document.getElementById('newActivationCode').value = code;
+        }
+
+        function addActivationCode() {
+            const code = document.getElementById('newActivationCode').value.trim();
+            if (!code) return;
+            
+            database.ref('activation_codes/' + code).set({
+                active: true,
+                createdAt: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
+                showNotification('تم إضافة كود التفعيل', 'success');
+                document.getElementById('newActivationCode').value = '';
+            });
+        }
+
+        function deleteActivationCode(code) {
+            if (confirm('حذف كود التفعيل؟')) {
+                database.ref('activation_codes/' + code).remove();
+            }
+        }
+
+        // Notification
+        function showNotification(message, type) {
+            const notif = document.getElementById('notification');
+            document.getElementById('notificationText').textContent = message;
+            notif.className = 'notification ' + type + ' show';
+            
+            setTimeout(() => {
+                notif.classList.remove('show');
+            }, 3000);
+        }
+
+        // Close modals on outside click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
