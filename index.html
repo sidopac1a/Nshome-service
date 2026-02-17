@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NS Home Service - خدمات المنزل</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --dark: #1f2937;
+            --light: #f3f4f6;
+            --white: #ffffff;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--dark);
+            overflow-x: hidden;
+        }
+
+        /* Activation Overlay */
+        #activationOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: white;
+        }
+
+        .activation-box {
+            background: white;
+            color: var(--dark);
+            padding: 2rem;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 90%;
+            width: 400px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .activation-box h2 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .activation-box input {
+            width: 100%;
+            padding: 1rem;
+            margin: 1rem 0;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .activation-box button {
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .activation-box button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        /* Main App Container */
+        #appContainer {
+            display: none;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: var(--white);
+            padding: 1rem;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        .logo img {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.9), rgba(118, 75, 162, 0.9));
+            color: white;
+            padding: 3rem 1rem;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            font-weight: 800;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Services Grid */
+        .services-section {
+            padding: 2rem 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: var(--white);
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .service-card {
+            background: var(--white);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            transition: transform 0.3s;
+            cursor: pointer;
+        }
+
+        .service-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .service-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            background: #e5e7eb;
+        }
+
+        .service-content {
+            padding: 1.5rem;
+        }
+
+        .service-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .service-price {
+            color: var(--primary);
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .service-price span {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+
+        .service-features {
+            list-style: none;
+            margin: 1rem 0;
+        }
+
+        .service-features li {
+            padding: 0.3rem 0;
+            color: #6b7280;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .service-features li::before {
+            content: "✓";
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        .btn-select {
+            width: 100%;
+            padding: 0.8rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-select:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Order Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--white);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            background: var(--primary);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 20px 20px 0 0;
+            position: relative;
+        }
+
+        .modal-header h2 {
+            font-size: 1.3rem;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .speed-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .speed-option {
+            border: 2px solid #e5e7eb;
+            border-radius: 15px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .speed-option.active {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        .speed-option h4 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .speed-option .price {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--dark);
+        }
+
+        .location-btn {
+            width: 100%;
+            padding: 0.8rem;
+            background: var(--success);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .location-display {
+            background: #f3f4f6;
+            padding: 0.8rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            color: #6b7280;
+            display: none;
+        }
+
+        .submit-order {
+            width: 100%;
+            padding: 1rem;
+            background: var(--secondary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .submit-order:hover {
+            background: #d97706;
+            transform: translateY(-2px);
+        }
+
+        /* Tracking Section */
+        .tracking-section {
+            background: var(--white);
+            margin: 2rem 1rem;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .tracking-form {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .tracking-form input {
+            flex: 1;
+            padding: 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+
+        .tracking-form button {
+            padding: 1rem 2rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .order-status {
+            display: none;
+            background: #f3f4f6;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .status-timeline {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            position: relative;
+        }
+
+        .status-timeline::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 10%;
+            right: 10%;
+            height: 4px;
+            background: #e5e7eb;
+            z-index: 0;
+        }
+
+        .status-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .status-dot {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .status-step.active .status-dot {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .status-step.completed .status-dot {
+            background: var(--success);
+            color: white;
+        }
+
+        .status-label {
+            font-size: 0.8rem;
+            color: #6b7280;
+            text-align: center;
+        }
+
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: var(--white);
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            z-index: 2000;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .notification.success {
+            border-right: 4px solid var(--success);
+        }
+
+        .notification.error {
+            border-right: 4px solid var(--danger);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--dark);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .hero h1 {
+                font-size: 1.5rem;
+            }
+            
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .speed-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .tracking-form {
+                flex-direction: column;
+            }
+            
+            .status-timeline {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .status-timeline::before {
+                display: none;
+            }
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 1rem auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Activation Overlay -->
+    <div id="activationOverlay">
+        <div class="activation-box">
+            <h2>🔐 تفعيل التطبيق</h2>
+            <p>الرجاء إدخال كود التفعيل لاستخدام التطبيق</p>
+            <input type="text" id="activationCode" placeholder="XXXX-XXXX" maxlength="10">
+            <button onclick="activateApp()">تفعيل</button>
+            <p id="activationError" style="color: var(--danger); margin-top: 1rem; display: none;">كود التفعيل غير صحيح</p>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="appContainer">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <img src="https://via.placeholder.com/50x50/2563eb/ffffff?text=NS" alt="NS Logo" id="logoImg">
+                    <span>NS Home</span>
+                </div>
+                <button onclick="showTracking()" style="background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 20px; cursor: pointer;">
+                    تتبع طلبي
+                </button>
+            </div>
+        </header>
+
+        <!-- Hero -->
+        <section class="hero">
+            <h1>خدمات منزلية احترافية</h1>
+            <p>نظافة، صيانة، وكل ما يحتاجه منزلك بجودة عالية</p>
+        </section>
+
+        <!-- Services -->
+        <section class="services-section">
+            <h2 class="section-title">اختر الخدمة المناسبة</h2>
+            <div class="services-grid" id="servicesGrid">
+                <!-- Services will be loaded dynamically -->
+            </div>
+        </section>
+
+        <!-- Tracking Section -->
+        <section class="tracking-section" id="trackingSection" style="display: none;">
+            <h2 style="margin-bottom: 1rem; color: var(--primary);">تتبع حالة الطلب</h2>
+            <div class="tracking-form">
+                <input type="text" id="trackOrderId" placeholder="أدخل رقم الطلب">
+                <button onclick="trackOrder()">بحث</button>
+            </div>
+            <div id="orderStatus" class="order-status">
+                <h3 id="statusTitle">حالة الطلب</h3>
+                <div class="status-timeline" id="statusTimeline">
+                    <div class="status-step active" data-step="pending">
+                        <div class="status-dot">📝</div>
+                        <span class="status-label">تم الاستلام</span>
+                    </div>
+                    <div class="status-step" data-step="processing">
+                        <div class="status-dot">⏳</div>
+                        <span class="status-label">قيد المعالجة</span>
+                    </div>
+                    <div class="status-step" data-step="team_assigned">
+                        <div class="status-dot">👥</div>
+                        <span class="status-label">تم تعيين الفريق</span>
+                    </div>
+                    <div class="status-step" data-step="on_way">
+                        <div class="status-dot">🚗</div>
+                        <span class="status-label">في الطريق</span>
+                    </div>
+                    <div class="status-step" data-step="completed">
+                        <div class="status-dot">✅</div>
+                        <span class="status-label">تم الانتهاء</span>
+                    </div>
+                </div>
+                <div id="statusDetails" style="margin-top: 1.5rem; text-align: right;"></div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>© 2024 NS Home Service - جميع الحقوق محفوظة</p>
+        </footer>
+    </div>
+
+    <!-- Order Modal -->
+    <div class="modal" id="orderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button class="close-btn" onclick="closeModal()">×</button>
+                <h2 id="modalTitle">طلب خدمة</h2>
+            </div>
+            <div class="modal-body">
+                <form id="orderForm">
+                    <input type="hidden" id="selectedService">
+                    
+                    <div class="form-group">
+                        <label>اختر سرعة الخدمة</label>
+                        <div class="speed-options">
+                            <div class="speed-option" onclick="selectSpeed('normal')" id="speedNormal">
+                                <h4>عادية</h4>
+                                <div class="price" id="normalPrice">0 ر.ع</div>
+                                <small>خلال 24-48 ساعة</small>
+                            </div>
+                            <div class="speed-option active" onclick="selectSpeed('express')" id="speedExpress">
+                                <h4>سريعة ⚡</h4>
+                                <div class="price" id="expressPrice">0 ر.ع</div>
+                                <small>خلال 2-4 ساعات</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>الاسم الكامل *</label>
+                        <input type="text" id="customerName" required placeholder="محمد أحمد">
+                    </div>
+
+                    <div class="form-group">
+                        <label>رقم الهاتف *</label>
+                        <input type="tel" id="customerPhone" required placeholder="91234567" maxlength="8">
+                    </div>
+
+                    <div class="form-group">
+                        <label>الموقع *</label>
+                        <button type="button" class="location-btn" onclick="getLocation()">
+                            📍 تحديد موقعي الحالي
+                        </button>
+                        <div class="location-display" id="locationDisplay"></div>
+                        <input type="hidden" id="latitude">
+                        <input type="hidden" id="longitude">
+                        <input type="text" id="addressDetails" placeholder="تفاصيل العنوان (اختياري)">
+                    </div>
+
+                    <div class="form-group">
+                        <label>ملاحظات إضافية</label>
+                        <textarea id="notes" rows="3" placeholder="أي تفاصيل إضافية..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>السعر الإجمالي</label>
+                        <div style="font-size: 2rem; color: var(--primary); font-weight: 800;" id="totalPrice">0 ر.ع</div>
+                    </div>
+
+                    <button type="submit" class="submit-order">إرسال الطلب</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <span id="notificationIcon"></span>
+        <span id="notificationText"></span>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCxiENTocnUd484VCe6ru8MCCQZp1gwvLk",
+            authDomain: "abcdef-3f89d.firebaseapp.com",
+            projectId: "abcdef-3f89d",
+            storageBucket: "abcdef-3f89d.firebasestorage.app",
+            messagingSenderId: "250358897288",
+            appId: "1:250358897288:web:50b6f8df76cd1bcbc15d3d",
+            measurementId: "G-NPW8F9B3D0"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+
+        // Global Variables
+        let currentService = null;
+        let selectedSpeed = 'express';
+        let servicesData = [];
+
+        // Check Activation on Load
+        window.onload = function() {
+            const isActivated = localStorage.getItem('ns_app_activated');
+            const activationExpiry = localStorage.getItem('ns_activation_expiry');
+            
+            if (isActivated === 'true' && activationExpiry && new Date().getTime() < parseInt(activationExpiry)) {
+                showApp();
+            } else {
+                document.getElementById('activationOverlay').style.display = 'flex';
+            }
+        };
+
+        // Activation Function
+        function activateApp() {
+            const code = document.getElementById('activationCode').value.trim();
+            // Check against Firebase or use a default code for demo
+            const validCodes = ['NS2024', 'TEST1234', 'OMAN2024'];
+            
+            database.ref('activation_codes/' + code).once('value').then(snapshot => {
+                if (snapshot.exists() && snapshot.val().active === true || validCodes.includes(code)) {
+                    const trialDays = 14;
+                    const expiryDate = new Date().getTime() + (trialDays * 24 * 60 * 60 * 1000);
+                    
+                    localStorage.setItem('ns_app_activated', 'true');
+                    localStorage.setItem('ns_activation_expiry', expiryDate);
+                    localStorage.setItem('ns_activation_code', code);
+                    
+                    showApp();
+                } else {
+                    document.getElementById('activationError').style.display = 'block';
+                }
+            }).catch(() => {
+                // Fallback for demo
+                if (validCodes.includes(code)) {
+                    const trialDays = 14;
+                    const expiryDate = new Date().getTime() + (trialDays * 24 * 60 * 60 * 1000);
+                    
+                    localStorage.setItem('ns_app_activated', 'true');
+                    localStorage.setItem('ns_activation_expiry', expiryDate);
+                    localStorage.setItem('ns_activation_code', code);
+                    
+                    showApp();
+                } else {
+                    document.getElementById('activationError').style.display = 'block';
+                }
+            });
+        }
+
+        function showApp() {
+            document.getElementById('activationOverlay').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            loadServices();
+            loadLogo();
+        }
+
+        // Load Logo from Firebase
+        function loadLogo() {
+            database.ref('settings/logo').once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    document.getElementById('logoImg').src = snapshot.val();
+                }
+            });
+        }
+
+        // Load Services
+        function loadServices() {
+            const grid = document.getElementById('servicesGrid');
+            grid.innerHTML = '<div class="spinner"></div>';
+            
+            database.ref('services').on('value', snapshot => {
+                servicesData = [];
+                grid.innerHTML = '';
+                
+                snapshot.forEach(child => {
+                    const service = child.val();
+                    service.id = child.key;
+                    servicesData.push(service);
+                    
+                    const card = createServiceCard(service);
+                    grid.appendChild(card);
+                });
+                
+                if (servicesData.length === 0) {
+                    // Default services if none in database
+                    const defaultServices = [
+                        {
+                            id: 'cleaning',
+                            name: 'تنظيف منزل شامل',
+                            description: 'تنظيف كامل للمنزل مع تعقيم',
+                            price: 25,
+                            expressPrice: 40,
+                            image: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400',
+                            features: ['تنظيف الغرف', 'تنظيف المطابخ', 'تنظيف الحمامات', 'تعقيم شامل']
+                        },
+                        {
+                            id: 'maintenance',
+                            name: 'صيانة عامة',
+                            description: 'إصلاح الأعطال المنزلية',
+                            price: 15,
+                            expressPrice: 30,
+                            image: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400',
+                            features: ['كهرباء', 'سباكة', 'دهانات', 'أعمال نجارة']
+                        }
+                    ];
+                    
+                    defaultServices.forEach(service => {
+                        const card = createServiceCard(service);
+                        grid.appendChild(card);
+                    });
+                    servicesData = defaultServices;
+                }
+            });
+        }
+
+        function createServiceCard(service) {
+            const card = document.createElement('div');
+            card.className = 'service-card';
+            card.innerHTML = `
+                <img src="${service.image || 'https://via.placeholder.com/400x180'}" class="service-image" alt="${service.name}">
+                <div class="service-content">
+                    <h3 class="service-title">${service.name}</h3>
+                    <div class="service-price">${service.price} <span>ر.ع / عادي</span></div>
+                    <ul class="service-features">
+                        ${service.features ? service.features.map(f => `<li>${f}</li>`).join('') : ''}
+                    </ul>
+                    <button class="btn-select" onclick="openOrderModal('${service.id}')">اطلب الخدمة</button>
+                </div>
+            `;
+            return card;
+        }
+
+        // Order Modal Functions
+        function openOrderModal(serviceId) {
+            currentService = servicesData.find(s => s.id === serviceId);
+            if (!currentService) return;
+            
+            document.getElementById('modalTitle').textContent = currentService.name;
+            document.getElementById('normalPrice').textContent = currentService.price + ' ر.ع';
+            document.getElementById('expressPrice').textContent = currentService.expressPrice + ' ر.ع';
+            document.getElementById('selectedService').value = serviceId;
+            
+            updateTotalPrice();
+            document.getElementById('orderModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('orderModal').classList.remove('active');
+            document.getElementById('orderForm').reset();
+            document.getElementById('locationDisplay').style.display = 'none';
+        }
+
+        function selectSpeed(speed) {
+            selectedSpeed = speed;
+            document.querySelectorAll('.speed-option').forEach(el => el.classList.remove('active'));
+            document.getElementById('speed' + speed.charAt(0).toUpperCase() + speed.slice(1)).classList.add('active');
+            updateTotalPrice();
+        }
+
+        function updateTotalPrice() {
+            if (!currentService) return;
+            const price = selectedSpeed === 'express' ? currentService.expressPrice : currentService.price;
+            document.getElementById('totalPrice').textContent = price + ' ر.ع';
+        }
+
+        // Geolocation
+        function getLocation() {
+            if (navigator.geolocation) {
+                showNotification('جاري تحديد الموقع...', 'info');
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        
+                        document.getElementById('latitude').value = lat;
+                        document.getElementById('longitude').value = lng;
+                        
+                        // Reverse geocoding (simplified)
+                        document.getElementById('locationDisplay').textContent = `📍 ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                        document.getElementById('locationDisplay').style.display = 'block';
+                        
+                        showNotification('تم تحديد الموقع بنجاح', 'success');
+                    },
+                    error => {
+                        showNotification('تعذر تحديد الموقع، يرجى إدخال العنوان يدوياً', 'error');
+                    }
+                );
+            } else {
+                showNotification('المتصفح لا يدعم تحديد الموقع', 'error');
+            }
+        }
+
+        // Submit Order
+        document.getElementById('orderForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const orderData = {
+                serviceId: document.getElementById('selectedService').value,
+                serviceName: currentService.name,
+                speed: selectedSpeed,
+                price: selectedSpeed === 'express' ? currentService.expressPrice : currentService.price,
+                customerName: document.getElementById('customerName').value,
+                customerPhone: document.getElementById('customerPhone').value,
+                latitude: document.getElementById('latitude').value,
+                longitude: document.getElementById('longitude').value,
+                addressDetails: document.getElementById('addressDetails').value,
+                notes: document.getElementById('notes').value,
+                status: 'pending',
+                createdAt: firebase.database.ServerValue.TIMESTAMP,
+                orderId: 'NS' + Date.now()
+            };
+            
+            // Save to Firebase
+            database.ref('orders/' + orderData.orderId).set(orderData)
+                .then(() => {
+                    showNotification(`تم إرسال الطلب بنجاح! رقم الطلب: ${orderData.orderId}`, 'success');
+                    closeModal();
+                    
+                    // Store order ID for tracking
+                    let myOrders = JSON.parse(localStorage.getItem('my_orders') || '[]');
+                    myOrders.push(orderData.orderId);
+                    localStorage.setItem('my_orders', JSON.stringify(myOrders));
+                })
+                .catch(error => {
+                    showNotification('حدث خطأ، يرجى المحاولة مرة أخرى', 'error');
+                });
+        });
+
+        // Tracking Functions
+        function showTracking() {
+            const section = document.getElementById('trackingSection');
+            section.style.display = section.style.display === 'none' ? 'block' : 'none';
+            section.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function trackOrder() {
+            const orderId = document.getElementById('trackOrderId').value.trim();
+            if (!orderId) return;
+            
+            database.ref('orders/' + orderId).once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    const order = snapshot.val();
+                    displayOrderStatus(order);
+                } else {
+                    showNotification('لم يتم العثور على الطلب', 'error');
+                }
+            });
+        }
+
+        function displayOrderStatus(order) {
+            document.getElementById('orderStatus').style.display = 'block';
+            document.getElementById('statusTitle').textContent = `طلب #${order.orderId} - ${order.serviceName}`;
+            
+            // Update timeline
+            const steps = ['pending', 'processing', 'team_assigned', 'on_way', 'completed'];
+            const currentStep = steps.indexOf(order.status);
+            
+            document.querySelectorAll('.status-step').forEach((step, index) => {
+                step.classList.remove('active', 'completed');
+                if (index < currentStep) {
+                    step.classList.add('completed');
+                } else if (index === currentStep) {
+                    step.classList.add('active');
+                }
+            });
+            
+            // Details
+            const details = document.getElementById('statusDetails');
+            details.innerHTML = `
+                <p><strong>العميل:</strong> ${order.customerName}</p>
+                <p><strong>الهاتف:</strong> ${order.customerPhone}</p>
+                <p><strong>السرعة:</strong> ${order.speed === 'express' ? 'سريعة' : 'عادية'}</p>
+                <p><strong>السعر:</strong> ${order.price} ر.ع</p>
+                <p><strong>الوقت:</strong> ${new Date(order.createdAt).toLocaleString('ar-OM')}</p>
+            `;
+        }
+
+        // Notification System
+        function showNotification(message, type) {
+            const notif = document.getElementById('notification');
+            const icon = document.getElementById('notificationIcon');
+            const text = document.getElementById('notificationText');
+            
+            text.textContent = message;
+            icon.textContent = type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ';
+            
+            notif.className = 'notification ' + type + ' show';
+            
+            setTimeout(() => {
+                notif.classList.remove('show');
+            }, 3000);
+        }
+
+        // Close modal on outside click
+        document.getElementById('orderModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+    </script>
+</body>
+</html>
